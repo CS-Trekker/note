@@ -1562,14 +1562,24 @@ htop  (类似的还有glances,dstat)
 | F9 / k        | 杀死进程                  | 选中进程后按此键，选择信号终止进程。                         |
 
 ```bash
+df -h                  # 查看整体磁盘使用情况
 du -h ~/study   # disk usage
 ncdu                  # du的交互版
+free -h               # 
 
-python3 -m http.server 4444之后，使用lsof | grep ":4444 .LISTEN"
+python3 -m http.server 4444
+lsof | grep ":4444 .LISTEN"
 # lsof 可以列出被进程打开的文件信息
 
 hyperfine --warmup 3 'fdfind -e py' 'find . -iname "*.py"'
 #　fdfind vs find性能对比（使用 hyperfine）
+
+ iotop
+# 可以显示实时 I/O 占用信息而且可以非常方便地检查某个进程是否正在执行大量的磁盘读写操作
+
+ss -tuln                # 查看系统中监听的 TCP 和 UDP 端口
+
+sudo nethogs     # 对网络占用进行监控(还有iftop也可以)
 ```
 # 8.元编程
 # 9.安全和密码学

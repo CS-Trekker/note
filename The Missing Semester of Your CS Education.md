@@ -1500,7 +1500,7 @@ kernprof -l -v urls.py
 #　line_profiler是逐行跟踪分析器，要配合在代码中插入装饰器@profile使用，用于定位函数内部“性能瓶颈”
 
 #######################################
-Wrote profile results to urls.py.lprof
+Wrote profile results to urls.py.lprof     # 这个lprof文件要用python3打开
 Timer unit: 1e-06 s
 
 Total time: 0.474917 s
@@ -1534,12 +1534,21 @@ Line #    Mem usage    Increment  Occurrences   Line Contents
      5   30.230 MiB -152.520 MiB           1       del b
      6   30.230 MiB    0.000 MiB           1       return a
 ```
-### perf
+### 事件分析器perf
 ```bash
 sudo perf stat stress -c 1
 # 使用 stress 工具对系统进行 1 个 CPU 核心的压力测试，并通过 perf 的stat工具收集其运行过程中的性能统计数据
+sudo perf record stress -c 1
+# 记录程序正在执行的操作
+sudo perf report
+# 执行 perf record 采样完成后，用 perf report 来查看采样结果
 ```
-
+### 可视化
+#### flame graph (采样分析)
+查看程序的栈
+#### 调用图
+在python中用pycallgraph生成，查看函数调用关系
+  
 # 8.元编程
 # 9.安全和密码学
 123345678

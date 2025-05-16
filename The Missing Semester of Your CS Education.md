@@ -318,6 +318,7 @@ stat -c '%X %n' example.txt
 | `-n` | 不输出末尾的换行符             |
 
 ## fd/find查找文件、文件夹
+*fd好像改名fd-find，为避免冲突*
 
 ```bash
 # 查找所有名称为src的文件夹
@@ -1548,7 +1549,16 @@ sudo perf report
 查看程序的栈
 #### 调用图
 在python中用pycallgraph生成，查看函数调用关系
-  
+### 资源监控
+```bash
+htop
+
+du -h ~/study   # disk usage
+ncdu                  # du的交互版
+
+python3 -m http.server 4444之后，使用lsof | grep ":4444 .LISTEN"
+# lsof 可以列出被进程打开的文件信息
+```
 # 8.元编程
 # 9.安全和密码学
 123345678

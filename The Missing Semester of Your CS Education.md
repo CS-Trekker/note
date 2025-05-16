@@ -318,7 +318,7 @@ stat -c '%X %n' example.txt
 | `-n` | 不输出末尾的换行符             |
 
 ## fd/find查找文件、文件夹
-*fd好像改名fd-find，为避免冲突*
+*fd好像改名fdfind，为避免冲突*
 
 ```bash
 # 查找所有名称为src的文件夹
@@ -1550,15 +1550,25 @@ sudo perf report
 #### 调用图
 在python中用pycallgraph生成，查看函数调用关系
 ### 资源监控
-```bash
-htop
 
+| htop<br>快捷键   | 功能描述                  | 说明与用途                                      |
+| ------------- | --------------------- | ------------------------------------------ |
+| F5 / t        | 显示进程树状结构              | 展示父子进程关系，观察服务或脚本启动的子进程结构。                  |
+| F6 / > / .    | 选择排序方式                | 可以选择按 CPU%、内存占用、PID、运行时间等排序。               |
+| N / P / M / T | 快速按 PID、CPU%、内存%、时间排序 | 分别代表 `PID`、`%CPU`、`%MEM`、`TIME+`。快速排序用得很多。 |
+| F3 / /        | 按进程名搜索                | 快速定位特定进程，如 `python`、`nginx`。               |
+| F4 / \        | 筛选显示进程                | 只显示匹配关键词的进程，适合聚焦查看。                        |
+| F9 / k        | 杀死进程                  | 选中进程后按此键，选择信号终止进程。                         |
+
+```bash
 du -h ~/study   # disk usage
 ncdu                  # du的交互版
 
 python3 -m http.server 4444之后，使用lsof | grep ":4444 .LISTEN"
 # lsof 可以列出被进程打开的文件信息
+
+hyperfine --warmup 3 'fdfind -e py' 'find . -iname "*.py"'
+#　fdfind vs find性能对比（使用 hyperfine）
 ```
 # 8.元编程
 # 9.安全和密码学
-123345678

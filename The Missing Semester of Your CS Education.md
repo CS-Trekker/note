@@ -1352,7 +1352,8 @@ journalctl --since "1m ago" | grep Hello
 ```bash
 sudo dmesg -T | grep -i error    # 筛选内核日志中所有包含“error”（忽略大小写）的信息
 ```
-### 调试器debugger（ipdb、pdb)
+### 调试器debugger
+#### pdb/ipdb
 ```bash
 python3 -m ipdb bubble.py
 # 使用ipdb调试
@@ -1396,6 +1397,32 @@ python3 -m ipdb bubble.py
 # pdb 是反着显示的， 最上面是最底帧，最下面是最上帧
 # w命令的结果中， > 标记的是当前帧
 ```
+#### shellcheck的一个例子
+```sh
+#!/bin/sh
+## Example: a typical script with several problems
+for f in $(ls *.m3u)                                                                             # 通过ls命令输出来迭代文件名是不可靠的，特别是当文件名包含空格、换行符或其他特殊字符时
+												　# 如果文件名以　-　开头，可能会被误解为命令选项
+do
+  grep -qi hq.*mp3 $f \　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　 # grep模式、变量$f未加引号
+    && echo -e 'Playlist $f contains a HQ file in mp3 format'      # echo -e在POSIX shell中未定义； 单引号
+done
+```
+
+```sh
+#!/bin/sh
+##  FIXED
+for f in ./*.m3u
+do
+  grep -qi "hq.*mp3" "$f" \
+	   && printf "Playlist %s contains a HQ file in mp3 format\n" "$f"
+done
+```
+### 反向调试
+>具体工具有`revPDB`(Python),`rr`(C/C++)，不过没亲自动手试过
+
+>传统调试器只能向前执行，而Bug定位需要向后思考
+>反向调试器让开发者可以像侦探一样，从错误结果"倒推"到原因，节约时间
 ### 系统调用strace
 ```bash
 sudo strace ls -l > /dev/null # 跟踪 ls -l 命令的系统调用过程
@@ -1433,6 +1460,10 @@ mypy lint.py
 ```vim
 #######  把分析器集成到编辑器中  #######
 :ALEToggle                  # 切换 ALE 的开启/关闭状态 
+```
+#### Vim插件neomake
+```vim
+:Neomake                     # 把shellcheck集成到编辑器中
 ```
 ### Python虚拟环境(venv)
 ```bash

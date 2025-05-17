@@ -1,7 +1,4 @@
 # 1.课程概览与shell
-  
----
-
 ## 回到上一个目录
 ```bash
 cd -
@@ -106,10 +103,7 @@ mv oldname.txt newname.txt
 ```
 
 # 2.shell工具与脚本
-
----
-*TLDR上有一些比较有用的关于shell命令的一些案例说明
-
+>TLDR上有一些比较有用的关于shell命令的一些案例说明
 ## 定义了两个函数的shell脚本实例
 
 ```bash
@@ -281,7 +275,6 @@ find "$directory" -type f -print0 | xargs -0 stat --format "%X %n" | sort -n | t
 `-0` 选项告诉 `xargs` 以空字符为分隔符来处理输入，从而正确处理带有空格、特殊字符等的文件名。
 
 
-
 3. **xargs**把前一个命令的输出，变成后一个命令的参数,例如：
 
 ```bash
@@ -318,7 +311,7 @@ stat -c '%X %n' example.txt
 | `-n` | 不输出末尾的换行符             |
 
 ## fd/find查找文件、文件夹
-*fd好像改名fdfind，为避免冲突*
+>fd好像改名fdfind，为避免冲突
 
 ```bash
 # 查找所有名称为src的文件夹
@@ -431,9 +424,6 @@ grep -r -c 'abc' .
 | 在外部程序中打开文件    | `Shift+Enter` | 使用外部程序打开文件（如编辑器） |
 
 # 3.vim 
-  
----
-
 ## 写入模式相关命令
 
 | 命令 | 说明 |
@@ -643,8 +633,6 @@ call plug#end()
 | `mkdir -p` | 强制新建多级目录，若目录已存在不报错 |
 
 # 4.数据整理
-
----
 ## Regex
 ```regex
 [^abc] # 表示不匹配abc
@@ -656,7 +644,6 @@ call plug#end()
 \D     # 匹配非数字字符
 \b     # 匹配单词边界
 ```
-
 
 ---
 
@@ -854,7 +841,7 @@ Line 4
 sed '/Start/,$d' test.txt 
 Line 1
 ```
-*这些sed只有使用-i后才能修改原文件（但是就不会有stdout了）*
+>些sed只有使用-i后才能修改原文件（但是就不会有stdout了）
 
 # 5.命令行环境
 ## job control（任务控制）
@@ -886,7 +873,8 @@ while True:
 | `SIGCONT` | 18   | 恢复信号(fg、bg)              | 无     |
 | `SIGSTOP` | 19   | 停止信号（`暂停`进程执行，`无法捕获或忽略`） | 无     |
 | `SIGTSTP` | 20   | 停止信号（`暂停`进程执行）           | `^Z`  |
-*SIGHUP不会直接导致进程终止，但进程接收到SIGHUP后一般会自行终止*
+>SIGHUP不会直接导致进程终止，但进程接收到SIGHUP后一般会自行终止
+
 ```bash
 nohup sleep 3000 &
 jobs -l                                 # 查看当前终端的进程
@@ -1097,7 +1085,7 @@ git merge --continue
 # 继续未完成的合并过程
 ```
 ### 变基操作
-*建议先多用 `merge`,只对==尚未推送或分享给别人==的==本地==修改执行变基操作清理历史， 从不对已推送至别处的提交执行变基操作*
+>建议先多用 `merge`,只对==尚未推送或分享给别人==的==本地==修改执行变基操作清理历史， 从不对已推送至别处的提交执行变基操作
 ![[Pasted image 20250513092230.png|500]]
 ```bash
 git rebase --onto master server client
@@ -1328,8 +1316,9 @@ git checkout -b <branch-name>
 # 7.调试及性能分析
 ## 调试
 ### 日志
-*日志文件大多位于/var/log/文件夹下*
-*lnav    一个交互式、彩色的日志查看器*
+>日志文件大多位于/var/log/文件夹下
+>lnav    一个交互式、彩色的日志查看器
+
 ```bash
 printf "\e[38;2;255;0;0mThis is red\e[0m\n"    
 
@@ -1363,32 +1352,57 @@ journalctl --since "1m ago" | grep Hello
 ```bash
 sudo dmesg -T | grep -i error    # 筛选内核日志中所有包含“error”（忽略大小写）的信息
 ```
-### 调试器debugger
+### 调试器debugger（ipdb、pdb)
 ```bash
 python3 -m ipdb bubble.py
 # 使用ipdb调试
 ```
 
-| ipdb命令              | 说明                                                    |
-| ------------------- | ----------------------------------------------------- |
-| `l`                 | 显示当前执行位置附近的源代码（默认显示11行），可以用 `l [start],[end]` 指定显示范围。 |
-| `s`                 | 单步执行，进入函数内部。                                          |
-| `c`                 | 继续执行程序直到遇到断点或程序结束。                                    |
-| `r`                 | 继续执行直到当前函数返回。                                         |
-| `n`                 | 单步执行，但不进入函数内部（跳过函数调用）。                                |
-| `q`                 | 退出调试器，终止程序执行。                                         |
-| `restart`           | 重新启动调试程序，从头开始执行。                                      |
-| `b` (break)         | 设置断点，例如 `b 6` 表示在第6行设置断点。                             |
-| `cl` (clear)        | 清除断点，可以用 `cl [断点号]` 清除指定断点，或者 `cl` 清除所有断点。            |
-| `p`                 | 打印表达式的值，例如 `p variable`。                              |
-| `pp` (pretty print) | 美化打印表达式的值，更易阅读。                                       |
-| `p local()`         | 打印当前作用域内的局部变量字典。                                      |
+| ipdb命令              | 说明                                                                                           |
+| ------------------- | -------------------------------------------------------------------------------------------- |
+| `l`                 | 显示当前执行位置附近的源代码（默认显示11行），可以用 `l [start],[end]` 指定显示范围。                                        |
+| `s`                 | 单步执行，进入函数内部。                                                                                 |
+| `n`                 | 单步执行，但不进入函数内部（函数调用会被视为一个原子操作）。                                                               |
+| `c`                 | 继续执行程序直到遇到断点或程序结束。                                                                           |
+| `!c`                | 输出c的值（而不是continue)                                                                           |
+| `b 6`               | 在第6行设置断点。                                                                                    |
+| `tbreak 10`         | 临时断点（命中后自动删除）                                                                                |
+| `b`                 | 查看断点                                                                                         |
+| `pm()`              | 停在最后一个抛出异常的地方的前面(可以检查在程序出错之前程序的状态)<br>相当于pdb.post_mortem(sys.last_traceback) ，后者需要import sys |
+| `r`                 | 继续执行直到当前函数返回。                                                                                |
+| `q`                 | 退出调试器，终止程序执行。                                                                                |
+| `cl` (clear)        | 清除断点，可以用 `cl [断点号]` 清除指定断点，或者 `cl` 清除所有断点。                                                   |
+| `p`                 | 打印表达式的值，例如 `p variable`。                                                                     |
+| `pp` (pretty print) | 美化打印表达式的值，更易阅读。                                                                              |
+| `p locals()`        | 打印当前作用域内的局部变量字典。                                                                             |
+| `restart`           | （ipdb特有）重新启动调试程序，从头开始执行。                                                                     |
+| `display`           | (ipdb特有）持续跟踪变量的变化（只在值变动时显示）(undisplay取消)                                                     |
+>在python代码中插入`breakpoint()`可以打断点
+
+| 命令  | 全称      | 切换方向   | 作用对象                                    |
+| --- | ------- | ------ | --------------------------------------- |
+| `w` | `where` | 显示整个栈  | 显示当前的调用栈信息，列出所有调用帧，从最早的调用到当前执行位置（最底到最顶） |
+| `u` | `up`    | 向上切换栈帧 | 切换到上层调用者的帧（即“谁调用了当前函数”）                 |
+| `d` | `down`  | 向下切换栈帧 | 切换到下层被调用者的帧（即“当前函数调用的函数”）               |
+```python
+(Pdb) w
+> /home/ustc/study/Debugging and Profiling/pdb-tutorial/main.py(13)<module>()
+-> main()
+  /home/ustc/study/Debugging and Profiling/pdb-tutorial/main.py(9)main()
+-> GameRunner.run()
+  /home/ustc/study/Debugging and Profiling/pdb-tutorial/dicegame/runner.py(31)run()
+-> for die in runner.dice:
+
+# pdb 是反着显示的， 最上面是最底帧，最下面是最上帧
+# w命令的结果中， > 标记的是当前帧
+```
 ### 系统调用strace
 ```bash
 sudo strace ls -l > /dev/null # 跟踪 ls -l 命令的系统调用过程
 ```
 ### 静态分析
-*英语静态分析工具writegood*
+>英语静态分析工具writegood
+
 ```python
 import time
 
@@ -1565,7 +1579,7 @@ htop  (类似的还有glances,dstat)
 df -h                  # 查看整体磁盘使用情况
 du -h ~/study   # disk usage
 ncdu                  # du的交互版
-free -h               # 
+free -h               # 显示系统当前空闲的内存
 
 python3 -m http.server 4444
 lsof | grep ":4444 .LISTEN"

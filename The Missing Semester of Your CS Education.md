@@ -767,7 +767,7 @@ cat /usr/share/dict/words | sed 'y/ABCDEFGHIJKLMNOPQRSTUVWXYZ/abcdefghijklmnopqr
 sed -i.bak 's/regex/SUBSTITUTION/' input.txt
 # 可以自动创建一个后缀为 .bak 的备份文件
 ```
-## journalctl日志
+## journalctl日志、eog
 ```bash
 journalctl -q --list-boots # -q表示不要弹出'Hint:...'
 #列出所有的启动记录
@@ -785,7 +785,6 @@ journalctl --since 09:00 --unitl "1 hour ago"
 sudo systemd-analyze plot > systemd.svg
 #　使用 systemd-analyze 工具看一下启动时间都花在哪里
 eog systemd.svg # eog是默认的图形界面的图片查看器，此外feh是命令行工具，更适合放进脚本中
-
 ```
 
 ```bash
@@ -922,7 +921,7 @@ pidwait()
 ```
 *while 判断的是命令行的返回值而不是布尔值，这个和其他语言有所区别*
 *当进程不存在时，kill -0 返回值是非 0， 表示失败false*
-## terminal multiplexers(tmux)（终端多路复用器）
+## tmux（终端多路复用器）
 ### Window快捷键
 | 快捷键       | 功能说明              |
 | --------- | ----------------- |
@@ -1314,6 +1313,9 @@ git checkout -b <branch-name>
 ```
 
 # 7.调试及性能分析
+>perf 和 stress用不了
+
+>课后题的最后一题是关于wireshark抓包的
 ## 调试
 ### 日志
 >日志文件大多位于/var/log/文件夹下
@@ -1504,7 +1506,8 @@ time curl https://github.com &> /dev/null
 # user	0m0.047s
 # sys	0m0.013s
 ```
-### 分析器（CPU分析器）
+### CPU分析器
+
 | 特性           | 跟踪分析器（Tracing Profiler）         | 采样分析器（Sampling Profiler）       |
 |----------------|------------------------------------------|----------------------------------------|
 | 数据收集方式   | 函数调用插桩，记录每次调用               | 定期采样当前调用栈                     |
@@ -1538,49 +1541,81 @@ if __name__ == '__main__':
 ```bash
 python3 -m cProfile -s tottime grep.py 1000 '^(import|\s*def)[^,]*$' *.py
 # cProfile是Python内置的跟踪分析器（缺点：输出太多，可读性差）
+# -s tottime按tottime排序，从大到小显示。排除子函数时间
+# 如果是比较不同函数的性能，推荐使用-s time
+# 还可以-o output_file，把分析结果保存到文件
+
+# tottime	函数“自身”耗费的总时间（不包括子函数）
+# cumtime	累计时间（函数本身 + 所有子函数调用的时间总和）
+
+#############（另外一次分析的结果实例）################
+Ordered by: internal time
+
+   ncalls           tottime  percall  cumtime  percall     filename:lineno(function)
+    78454    0.032       0.000    0.078    0.000          random.py:291(randrange)
+    78454    0.022       0.000    0.034    0.000          random.py:242(_randbelow_with_getrandbits)
+34158/1000    0.016       0.000    0.020    0.000          origin_sorts.py:23(quicksort)
+34068/1000    0.013      0.000    0.015    0.000           origin_sorts.py:32(quicksort_inplace)
+    78454    0.013       0.000    0.091    0.000           random.py:332(randint)
+   235362        0.012       0.000    0.012    0.000          {built-in method _operator.index}
+        3    0.011       0.004    0.144    0.048           origin_sorts.py:4(test_sorted)
+    99348    0.007       0.000    0.007    0.000           {method 'getrandbits' of '_random.Random' objects}
+     1000      0.006       0.000    0.006    0.000            origin_sorts.py:11(insertionsort)
+……
 ```
 #### line_profiler（行级别）
 ```bash
 kernprof -l -v urls.py
 # urls.py是访问指定网页，解析其 HTML 内容，并提取页面中所有链接的 URL
-#　line_profiler是逐行跟踪分析器，要配合在代码中插入装饰器@profile使用，用于定位函数内部“性能瓶颈”
+#　line_profiler是逐行跟踪分析器，要在def函数定义的正上方一行插入装饰器@profile，用于定位函数内部“性能瓶颈”
+
+# Per Hit：每次执行的平均时间
+# % Time：该行代码占函数总执行时间的百分比
+
 
 #######################################
-Wrote profile results to urls.py.lprof     # 这个lprof文件要用python3打开
+Wrote profile results to urls.py.lprof     # 这个lprof文件要用python3 -m line_profiler打开
 Timer unit: 1e-06 s
 
 Total time: 0.474917 s
 File: urls.py
 Function: get_urls at line 7
 
-Line #      Hits         Time  Per Hit   % Time  Line Contents
+Line #      Hits         Time        Per Hit    % Time  Line Contents
 ==============================================================
-     7                                           @profile
-     8                                           def get_urls():
+     7                                                                 @profile
+     8                                                                 def get_urls():
      9         1     465727.0 465727.0     98.1      response = requests.get('https://missing.csail.mit.edu')
-    10         1       8781.6   8781.6      1.8      s = BeautifulSoup(response.content, 'lxml')
-    11         1          0.3      0.3      0.0      urls = []
-    12        48        389.0      8.1      0.1      for url in s.find_all('a'):
-    13        47         18.7      0.4      0.0          urls.append(url['href'])
+    10         1       8781.6    8781.6         1.8        s = BeautifulSoup(response.content, 'lxml')
+    11         1          0.3          0.3             0.0       urls = []
+    12        48      389.0        8.1             0.1       for url in s.find_all('a'):
+    13        47       18.7         0.4             0.0           urls.append(url['href'])
 
 ```
 ### 内存分析器
 #### memory_profiler（行级别）
 ```bash
 python3 -m memory_profiler mem.py
+# Mem usage	当前行代码执行前的内存使用量（单位是 MiB，约等于 MB）
+# Increment	这一行执行后相对上一次内存使用的增量（为 0 表示没有新增占用）
+# Occurrences	该行被执行的次数（可用于判断是否在循环中被频繁执行）
+
+
 ######################################
 Filename: mem.py
 
 Line #    Mem usage    Increment  Occurrences   Line Contents
 =============================================================
-     1   22.500 MiB   22.500 MiB           1   @profile
-     2                                         def my_func():
-     3   30.125 MiB    7.625 MiB           1       a = [1] * (10 ** 6)
-     4  182.750 MiB  152.625 MiB           1       b = [2] * (2 * 10 ** 7)
-     5   30.230 MiB -152.520 MiB           1       del b
-     6   30.230 MiB    0.000 MiB           1       return a
+     1   22.500 MiB   22.500 MiB         1              @profile
+     2                                                                          def my_func():
+     3   30.125 MiB    7.625 MiB           1                        a = [1] * (10 ** 6)
+     4  182.750 MiB  152.625 MiB        1                        b = [2] * (2 * 10 ** 7)
+     5   30.230 MiB -152.520 MiB        1                        del b
+     6   30.230 MiB    0.000 MiB           1                        return a
 ```
-### 事件分析器perf
+### 事件分析器
+>perf,报告与程序相关的系统事件
+
 ```bash
 sudo perf stat stress -c 1
 # 使用 stress 工具对系统进行 1 个 CPU 核心的压力测试，并通过 perf 的stat工具收集其运行过程中的性能统计数据
@@ -1593,7 +1628,12 @@ sudo perf report
 #### flame graph (采样分析)
 查看程序的栈
 #### 调用图
-在python中用pycallgraph生成，查看函数调用关系
+```bash
+pycallgraph graphviz -- ./fib.py    # --避免当文件名或者参数以 - 开头时，被误解析成命令行选项
+eog pycallgraph.png
+```
+![[pycallgraph.png]]
+
 ### 资源监控
 htop  (类似的还有glances,dstat)
 
@@ -1614,7 +1654,7 @@ free -h               # 显示系统当前空闲的内存
 
 python3 -m http.server 4444
 lsof | grep ":4444 .LISTEN"
-# lsof 可以列出被进程打开的文件信息
+# lsof 可以列出当前系统中所有被打开的文件（类 Unix 系统中，几乎一切都是文件，包括常规文件、目录、套接字、管道、设备等）
 
 hyperfine --warmup 3 'fdfind -e py' 'find . -iname "*.py"'
 #　fdfind vs find性能对比（使用 hyperfine）

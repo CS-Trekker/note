@@ -342,13 +342,10 @@ fd -e html -0 | xargs -0 zip html.zip
 
 find . -type f -name "*.html" -print0 | xargs -0 tar -cvzf html.zip
 find . -type f -name "*.html" -print0 | xargs -0 zip html.zip
-
-***
-# tar命令创建的是 .tar.gz 格式
-# zip命令创建的是 .zip 格式
-# tar用于创建、查看和提取归档文件
 ```
-
+>tar命令创建的是 .tar.gz 格式
+>zip命令创建的是 .zip 格式
+>tar用于创建、查看和提取归档文件
 ## 查找shell命令
 
 ```bash
@@ -1667,4 +1664,84 @@ ss -tuln                # 查看系统中监听的 TCP 和 UDP 端口
 sudo nethogs     # 对网络占用进行监控(还有iftop也可以)
 ```
 # 8.元编程
+
+## 构建系统
+**Makefile**：
+```makefile
+.PHONY: clean all do
+	# 声明三者为伪目标，只是动作名称，与同名文件无关； 否则会检查比较同名文件文件和它的依赖文件的时间戳，以此决定是否执行相应命令
+
+all: paper.pdf do
+
+paper.pdf: paper.tex plot-data.png
+	pdflatex paper.tex
+
+plot-%.png: %.dat plot.py                                    # %是通配符
+	./plot.py -i $*.dat -o $@                             # $* 表示通配符匹配的名字;$@ 表示目标文件的完整名字
+
+do:
+	touch do.txt
+# make默认执行第一个目标,所以如果没有 all 目标，执行 make 时默认只会构建 paper.pdf，do 不会被执行
+
+clean:
+	rm paper.pdf
+	rm do.txt
+```
+
+**Makefile1**：（递归调用子目录）
+```makefile
+SUBDIRS = foo bar baz
+
+.PHONY: subdirs $(SUBDIRS) clean
+
+subdirs: $(SUBDIRS)
+
+$(SUBDIRS):
+	$(MAKE) -C $@
+
+foo: baz         #foo 这个目标在执行前，必须先执行 baz
+# 因此即使 subdirs 的依赖写的是 foo-bar-baz，Make 会先根据依赖关系排序 baz-foo-bar
+
+clean:
+	rm bar/bar.txt
+```
+
+>同一个目录下的两个makefile:使用`make -f Makefile1`来执行
+
+>在 Makefile 中，如果把一个伪目标作为某个真实文件的依赖项，那么因为这个伪目标总是被认为“过期”，它的命令每次都会执行，并可能导致真实目标也被误认为“需要重建”
+
+>伪目标不会走隐式规则查找
+>隐式规则：例如`make foo.o`，如果Makefile中没有foo.o的规则，就自动尝试执行`gcc -c foo.c -o foo.o`
+
+| 文件名/过程名 | 文件类型              | 说明                                   |
+| ------- | ----------------- | ------------------------------------ |
+| `foo.c` | 源代码文件             | 用C语言编写的程序源码，是人类可读的文本文件               |
+| 编译      |                   | gcc -c foo.c -o foo.o                |
+| `foo.o` | 目标文件（Object file） | 编译器生成的机器代码，但未链接，不能直接执行               |
+| 链接      |                   | gcc foo.c -o foo<br>gcc foo.o -o foo |
+| `foo`   | 可执行文件             | 链接器将目标文件和库文件结合生成的可执行程序，可以运行          |
+
+>`evince`——默认的文档查看器
+>`xdg-open`——用系统默认的程序打开（任意类型）
+
+## 依赖管理
+**语义化版本：**
+
+1. `主版本号`：如果修改了 API 但是它并不向后兼容
+2. `次版本号`：如果添加了 API 并且该改动是向后兼容的
+3. `修订号`：没有改变 API,做了向后兼容的问题修正
+
+**锁文件**：列出了当前每个依赖所对应的具体版本号
+**vendoring**：把依赖中的所有代码直接拷贝到项目中
+
+## 持续集成
+**CI**：当您的代码变动时，自动运行的东西（例如Travis CI、Azure Pipelines 和 GitHub Actions）
+>在代码仓库中添加一个文件，描述当前仓库发生任何修改时，应该如何应对(例如：如果有人提交代码，执行测试套件)
+
+## 测试
+- 测试套件（Test suite）：所有测试的统称。
+- 单元测试（Unit test）：一种“微型测试”，用于对某个封装的特性进行测试。
+- 集成测试（Integration test）：一种“宏观测试”，针对系统的某一大部分进行，测试其不同的特性或组件是否能 _协同_ 工作。
+- 回归测试（Regression test）：一种实现特定模式的测试，用于保证之前引起问题的 bug 不会再次出现。
+- 模拟（Mocking）: 使用一个假的实现来替换函数、模块或类型，屏蔽那些和测试不相关的内容。例如，您可能会“模拟网络连接” 或 “模拟硬盘”。
 # 9.安全和密码学

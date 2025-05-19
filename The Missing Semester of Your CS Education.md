@@ -1000,6 +1000,11 @@ git restore --staged file
 git restore file
 # 撤销你还没 git add 的修改
 
+git rm file
+# 停止跟踪该文件，同时删除本地文件
+git rm --cached file
+# 停止跟踪该文件，同时保留本地文件（如果该文件已在暂存区，则也会从暂存区中移除）
+
 git diff
 # 比较工作区与暂存区的差异（未暂存的改动）
 git diff --staged
@@ -1117,6 +1122,7 @@ git init --bare
 git remote add <name> <url>
 # 例如git remote add origin ~/gitlearn/remote
 ```
+
 ``` bash
 ###### 分支的关联关系 #####
 
@@ -1147,11 +1153,6 @@ git remote rm <远程仓库名>           # 移除远程仓库
 git clone <url> <folder_name>
 # 例如 git clone ~/gitlearn/remote ~/gitlearn/demo2
 git pull = git fetch ; git merge
-
-git rm file
-# 停止跟踪该文件，同时删除本地文件
-git rm --cached file
-# 停止跟踪该文件，同时保留本地文件（如果该文件已在暂存区，则也会从暂存区中移除）
 
 git mv file_from file_to
 # 移动或重命名文件,相当于：
@@ -1664,20 +1665,21 @@ ss -tuln                # 查看系统中监听的 TCP 和 UDP 端口
 sudo nethogs     # 对网络占用进行监控(还有iftop也可以)
 ```
 # 8.元编程
-
 ## 构建系统
+
+### Makefile
 **Makefile**：
 ```makefile
 .PHONY: clean all do
-	# 声明三者为伪目标，只是动作名称，与同名文件无关； 否则会检查比较同名文件文件和它的依赖文件的时间戳，以此决定是否执行相应命令
+# 声明三者为伪目标，只是动作名称，与同名文件无关； 否则会检查比较同名文件文件和它的依赖文件的时间戳，以此决定是否执行相应命令
 
 all: paper.pdf do
 
 paper.pdf: paper.tex plot-data.png
 	pdflatex paper.tex
 
-plot-%.png: %.dat plot.py                                    # %是通配符
-	./plot.py -i $*.dat -o $@                             # $* 表示通配符匹配的名字;$@ 表示目标文件的完整名字
+plot-%.png: %.dat plot.py                               # %是通配符
+	./plot.py -i $*.dat -o $@                        # $* 表示通配符匹配的名字;$@ 表示目标文件的完整名字
 
 do:
 	touch do.txt
@@ -1686,9 +1688,12 @@ do:
 clean:
 	rm paper.pdf
 	rm do.txt
+	rm plot-data.png
+	rm paper.log
+	rm paper.aux
 ```
 
-**Makefile1**：（递归调用子目录）
+**recursive_makefile**：（递归调用子目录）
 ```makefile
 SUBDIRS = foo bar baz
 
@@ -1706,7 +1711,7 @@ clean:
 	rm bar/bar.txt
 ```
 
->同一个目录下的两个makefile:使用`make -f Makefile1`来执行
+>同一个目录下的两个makefile:使用`make -f recursive_makefile`来执行
 
 >在 Makefile 中，如果把一个伪目标作为某个真实文件的依赖项，那么因为这个伪目标总是被认为“过期”，它的命令每次都会执行，并可能导致真实目标也被误认为“需要重建”
 
@@ -1724,12 +1729,27 @@ clean:
 >`evince`——默认的文档查看器
 >`xdg-open`——用系统默认的程序打开（任意类型）
 
+>写Makefile时，应该提供一些标准的目标（target），例如all、install、clean、check、uninstall，方便别人使用你的项目
 ## 依赖管理
-**语义化版本：**
-
+### 语义化版本
 1. `主版本号`：如果修改了 API 但是它并不向后兼容
 2. `次版本号`：如果添加了 API 并且该改动是向后兼容的
 3. `修订号`：没有改变 API,做了向后兼容的问题修正
+
+**版本要求语法**：
+- 默认要求（如 `1.2.3` 代表 `>=1.2.3, <2.0.0`）
+- 插入符要求（`^1.2.3`，与默认相同）
+- 波浪号要求（`~1.2.3` 代表 `>=1.2.3, <1.3.0`）
+- 通配符要求（`1.*` 代表 `>=1.0.0, <2.0.0`）
+- 比较要求（如 `>= 1.2.0`、`< 2`）
+
+| 写法               | 意义                                | 是否允许升级？                                        | 推荐情况             |
+| ---------------- | --------------------------------- | ---------------------------------------------- | ---------------- |
+| `foo = "1.2.3"`  | **语义化版本范围**，等价于 `>=1.2.3, <1.3.0` | ✅ 会自动升级到 `<1.3.0` 的 patch 版本，如 `1.2.4`、`1.2.9` | ✅ 推荐，默认写法        |
+| `foo = "=1.2.3"` | **精确版本匹配**，只允许使用 `1.2.3` 一个版本     | ❌ 不会升级，其他版本一律不行                                | ⚠️ 特殊情况使用，平时不推荐  |
+| `foo = "~1.2.3"` | **波浪号版本匹配**，等价于 `>=1.2.3, <1.3.0` | ✅ 与 `"1.2.3"` 效果一样                             | ❌ 不推荐，意义相同但语法不主流 |
+
+> foo = "1.0"   等价于   foo >= 1.0.0, < 2.0.0 ,但不会匹配 1.0.0-alpha
 
 **锁文件**：列出了当前每个依赖所对应的具体版本号
 **vendoring**：把依赖中的所有代码直接拷贝到项目中
@@ -1738,6 +1758,21 @@ clean:
 **CI**：当您的代码变动时，自动运行的东西（例如Travis CI、Azure Pipelines 和 GitHub Actions）
 >在代码仓库中添加一个文件，描述当前仓库发生任何修改时，应该如何应对(例如：如果有人提交代码，执行测试套件)
 
+### git hook
+>.git/hooks/ 目录下的那些 \*.sample 文件是钩子脚本的示例，它们默认被命名为 .sample 后缀，因此不会自动生效，需要你去除后缀并chmod
+
+```bash
+# 下面是一个 pre-commit 钩子文件的一部分，会在提交前执行 make paper.pdf 并在出现构建失败的情况拒绝commit
+
+echo "Running make paper.pdf before commit..."
+if ! make paper.pdf; then
+    echo "Build failed. Commit aborted."
+    exit 1
+fi
+
+echo "Build succeeded. Proceeding with commit."
+exit 0
+```
 ## 测试
 - 测试套件（Test suite）：所有测试的统称。
 - 单元测试（Unit test）：一种“微型测试”，用于对某个封装的特性进行测试。

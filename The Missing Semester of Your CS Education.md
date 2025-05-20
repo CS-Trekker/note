@@ -39,17 +39,17 @@ for file in "$@"; do
 done
 ```
 
-| 变量       | 含义                               | 示例值                         |
-|------------|------------------------------------|--------------------------------|
-| `$0`       | 当前脚本的文件名或命令名                | `./myscript.sh`               |
-| `$#`       | 传递给脚本或函数的参数数量               | `2`                            |
-| `$$`       | 当前 Shell 或脚本的进程号（PID）         | `4567`                         |
-| `$!`       | 最近一个后台执行命令的进程号（PID）       | `12345`（如 `sleep 60 &` 后）  |
-| `$@`       | 传给脚本的所有参数（每个参数独立保留）     | `"file1.txt" "file2.txt"`     |
-| `$*`       | 传给脚本的所有参数（作为单一整体）        | `"file1.txt file2.txt"`       |
-| `$?`       | 最近一条命令的退出状态（0 表示成功）       | `0` 或 `1`                    |
-| `$_`       | 上一条命令的最后一个参数                   | `file2.txt`（如上条命令参数）  |
-| `!!`       | 上一条完整命令（历史命令）                 | `ls -l /home`                 |
+| 变量   | 含义                    | 示例值                       |
+| ---- | --------------------- | ------------------------- |
+| `$0` | 当前脚本的文件名或命令名          | `./myscript.sh`           |
+| `$#` | 传递给脚本或函数的参数数量         | `2`                       |
+| `$$` | 当前 Shell 或脚本的进程号（PID） | `4567`                    |
+| `$!` | 最近一个后台执行命令的进程号（PID）   | `12345`（如 `sleep 60 &` 后） |
+| `$@` | 传给脚本的所有参数（每个参数独立保留）   | `"file1.txt" "file2.txt"` |
+| `$*` | 传给脚本的所有参数（作为单一整体）     | `"file1.txt file2.txt"`   |
+| `$?` | 最近一条命令的退出状态（0 表示成功）   | `0` 或 `1`                 |
+| `$_` | 上一条命令的最后一个参数          | `file2.txt`（如上条命令参数）      |
+| `!!` | 上一条完整命令（历史命令）         | `ls -l /home`             |
 
 | 操作符 | 含义     | 示例                           |
 | ------ | -------- | ------------------------------ |
@@ -1428,7 +1428,13 @@ done
 sudo strace ls -l > /dev/null # 跟踪 ls -l 命令的系统调用过程
 ```
 ### 静态分析
->英语静态分析工具writegood
+>英语静态分析工具writegood和proselint(前者需要安装 Node.js 和 npm)
+
+```bash
+echo "very unique thing" | proselint
+# <stdin>:1:2: uncomparables.misc Comparison of an uncomparable: 'very unique' is not comparable.
+# <stdin>:1:2: weasel_words.very Substitute 'damn' every time you're inclined to write 'very'; your editor will delete it and the writing will be just as it should be.
+```
 
 ```python
 import time
@@ -1773,6 +1779,23 @@ fi
 echo "Build succeeded. Proceeding with commit."
 exit 0
 ```
+
+> 这里的1和0与之前的`$?`还有`while kill -0 $1 do …`，都是**返回状态值**，**1**是**失败，0**是**成功**
+
+### Github Actions
+- **Workflow（工作流）**：
+  每个工作流由一个 `.yml` 文件描述，位于仓库中的 `.github/workflows/` 目录下。
+  每个 workflow 可以定义触发条件和执行任务。
+
+- **Job（作业）**：
+  工作流中的一组任务，可以并行或串行运行。
+
+- **Step（步骤）**：
+  作业中的每一步操作，通常包括运行脚本或使用预定义的 action。
+
+例如：
+- `shellcheck.yml`：当 `.sh` 文件被提交时自动运行 `ShellCheck`
+- `proselint.yml`：当 `.md` 文件被提交时自动运行 `proselint`
 ## 测试
 - 测试套件（Test suite）：所有测试的统称。
 - 单元测试（Unit test）：一种“微型测试”，用于对某个封装的特性进行测试。
@@ -1780,3 +1803,148 @@ exit 0
 - 回归测试（Regression test）：一种实现特定模式的测试，用于保证之前引起问题的 bug 不会再次出现。
 - 模拟（Mocking）: 使用一个假的实现来替换函数、模块或类型，屏蔽那些和测试不相关的内容。例如，您可能会“模拟网络连接” 或 “模拟硬盘”。
 # 9.安全和密码学
+## 熵
+$$
+H = L \times \log_2 N
+$$
+- $H$ 表示熵（单位：bit）
+- $L$ 表示密码长度
+- $N$ 表示可能字符的种类数量
+## 哈希函数/散列函数
+```bash
+printf 'hello' | sha1sum
+aaf4c61ddcc5e8a2dabede0f3b482cd9aea9434d
+```
+
+- 确定性：对于不变的输入永远有相同的输出。
+- 不可逆性：对于 $hash(m) = h$，难以通过已知的输出 $h$ 来计算出原始输入 $m$。
+- 目标碰撞抵抗性/弱无碰撞：对于一个给定输入 $m_1$，难以找到 $m_2$ != $m_1$ 且 $hash(m_1) = hash(m_2)$。
+- 碰撞抵抗性/强无碰撞：难以找到一组满足 $hash(m_1) = hash(m_2)$ 的输入 $m_1$, $m_2$`（该性质严格强于目标碰撞抵抗性）。
+> sha1sum用SHA-1，sha256sum用SHA-2
+### 应用
+- `内容寻址存储`（如Git）（与位置寻址等相对）
+- `哈希校验`：从非官方镜像站下载ISO文件验证是否内容被篡改
+- `承诺机制`：（脑海中抛硬币）我随机选择一个值 r，并和你分享它的哈希值 h = sha256(r)。 这时你可以开始猜硬币的正反：我们一致同意偶数 r 代表正面，奇数 r 代表反面。 你猜完了以后，我告诉你值 r 的内容，得出胜负。同时你可以使用 sha256(r) 来检查我分享的哈希值 h 以确认我没有作弊
+## 密钥生成函数KDF
+> 通常较慢：防止被暴力破解
+
+> 问题：假设两个用户都用了 123456 作为密码，如果没有加`盐`，他们的哈希值完全一样，攻击者会立刻知道哪些人用了相同密码，以及同一个用户在不同的平台使用同一个密码的情况
+> 防止`彩虹表`攻击：`KDF(password + salt)`
+> 在验证登录请求时，使用输入的密码连接存储的盐重新计算哈希值 `KDF(input + salt)`，并与存储的哈希值对比
+
+## 对称加密
+> 代表：`AES`
+
+```text
+keygen()   ->   key (这是一个随机方法)
+encrypt(plaintext, key)   ->   ciphertext (输出密文)
+decrypt(ciphertext, key)   ->   plaintext (输出明文)
+```
+
+> 可用于把文件上传至Dropbox等云平台时的加密
+
+> 用户不用直接记住复杂的key密钥，而是记住passphrase密码,然后key = KDF(passphrase, salt)，并且密钥是随机生成的二进制数据，直接存储或传输风险较大
+
+```bash
+openssl aes-256-cbc -salt -in test.md -out test.enc.md
+openssl aes-256-cbc -d -in test.enc.md -out test.dec.md
+
+cmp test.dec.md test.md 
+# 无输出
+echo $?
+# 0
+```
+> cmp输出简洁，通常是“文件名 第N字节不同”，用于快速检测文件是否完全相同
+
+## 非对称加密
+> 代表：`RSA`
+
+```text
+keygen()   ->   (public key, private key)  (这是一个随机方法)
+
+encrypt(plaintext, public key)   ->   ciphertext  (输出密文)
+decrypt(ciphertext, private key)   ->   plaintext  (输出明文)
+
+# 签名和验证
+sign(message, private key)   ->   signature  (生成签名)
+verify(message, signature, public key)   ->   bool  (验证签名是否是由和这个公钥相关的私钥生成的，bool代表True or False)
+```
+### 应用
+- PGP电子邮件加密
+- 聊天加密（例如Signal、Telegram)
+- 签署软件发布
+- Git Tag有签名
+- 挑战应答机制：服务器生成一个随机挑战（随机数/随机字符串），发给客户端——客户端使用私钥对这个挑战进行数字签名，并将签名返回给服务器——服务器用存储的公钥验证签名的有效性
+
+### PGP加密邮件
+
+**第一步**：导入对方的公钥  
+```bash
+curl https://keybase.io/<username>/pgp_keys.asc | gpg --import
+````
+
+- `<username>` 替换为对方的 Keybase 用户名
+    
+- 这会将对方的 **PGP公钥** 导入到本地 GPG 密钥环中
+
+**第二步**：验证对方的身份指纹
+
+```bash
+gpg --edit-key "<real name or email>"
+```
+
+在 `gpg>` 控制台中输入：`fpr`，记录下输出的 **主密钥指纹**，并与对方在 Keybase、GitHub 或官网上发布的指纹进行比对。  
+示例输出：
+
+```
+主密钥指纹： 72EE 4824 FA6E FF1F E750  A015 C3F6 E4F5 086B 3B32
+```
+
+如果一致，说明该 **公钥** 可信，可以安全使用。
+
+**第三步**：编写你的邮件内容，例如 `message.txt`
+
+**第四步**：加密并签名消息
+
+```bash
+gpg --encrypt --sign --armor -r <recipient-email-or-keyid> message.txt
+```
+- `--encrypt`：用对方的 **公钥** 加密消息
+- `--sign`：用你自己的 **私钥** 对消息签名
+- `--armor`：输出 ASCII 格式（适合用邮件发送）
+- `-r`：指定前面 `--encrypt` 使用的 **公钥** 所属的接收人邮箱或 GPG Key ID（需与公钥一致）
+> 成功后将生成 `message.txt.asc` 文件
+
+**第五步**：通过邮件客户端（例如 Gmail）发送加密内容
+
+- 将 `message.txt.asc` 的内容复制到正文，或作为附件发送
+- 邮件主题建议使用明文，例如：`Confidential Message`
+
+
+> 如果你希望对方能加密回复你，可以用下面这个命令生成你的公钥文件，一起发送给对方：
+```bash
+gpg --armor --export yourself@gmail.com > mykey.asc
+```
+
+**其他常用命令**：
+
+```bash
+gpg --list-keys   # 列出你本地保存的所有公钥
+```
+
+```text
+# 示例
+pub   rsa4096 2014-10-30 [SC]
+      C3F6E4F5086B3B32
+uid           [ unknown] Anish Athalye <me@anishathalye.com>
+```
+> 其中 `C3F6E4F5086B3B32` 就是 Key ID
+
+## 密钥分发
+1. PKI:信任一个权威的`证书颁发机构CA`，然后通过它颁发的数字证书，来验证某个公钥确实属于某人
+2. PGP使用`信用网络`:我信任张三签署的密钥，那么张三签署的李四的密钥我也可以一定程度上信任
+3. Signal使用`TOFU`：信任用户第一次使用时给出的身份，此后严密监控密钥是否变动
+4. Keybase使用的`设备信任链机制`：新设备加入账户时，必须由现有已信任设备签名授权，多个设备共同维护账户密钥链，预防“中间人攻击”
+5. Keybase使用的`social proof`：绑定其他账号
+## 其他
+密码管理器、2FA、全盘加密

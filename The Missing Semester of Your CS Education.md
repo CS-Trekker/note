@@ -1947,4 +1947,7 @@ uid           [ unknown] Anish Athalye <me@anishathalye.com>
 4. Keybase使用的`设备信任链机制`：新设备加入账户时，必须由现有已信任设备签名授权，多个设备共同维护账户密钥链，预防“中间人攻击”
 5. Keybase使用的`social proof`：绑定其他账号
 ## 其他
-密码管理器、2FA、全盘加密
+密码管理器、2FA、全盘加密、`git commit -S`(Git 中用来对提交进行 GPG 签名) 、`git tag -s`和`git tag -v`
+
+# 10.大杂烩
+## AutoHotkey

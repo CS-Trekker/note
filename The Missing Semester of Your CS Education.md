@@ -1,9 +1,5 @@
 # 1.课程概览与shell
-## 回到上一个目录
-```bash
-cd -
-```
-
+> `whoami`或者`echo $USER`查看当前用户名
 ## ls的一些参数
 
 | 参数           | 作用简述                                  | 示例              |
@@ -919,6 +915,7 @@ pidwait()
 *while 判断的是命令行的返回值而不是布尔值，这个和其他语言有所区别*
 *当进程不存在时，kill -0 返回值是非 0， 表示失败false*
 ## tmux（终端多路复用器）
+> 在tmux的命令行里面按住shift进行选中内容，然后ctrl+shift+c复制内容
 ### Window快捷键
 | 快捷键       | 功能说明              |
 | --------- | ----------------- |
@@ -962,7 +959,7 @@ tmux ls
 # 列出当前正在运行的session
 
 tmux attach -t 0
-# 连接到名为“0”的session（-t是target)
+# 连接到名为“0”的session（alias是t0)
 
 tmux new -s "session 1" -n "window 1"
 #  创建名为“session 1”的新session,第一个window名为“window 1”
@@ -970,7 +967,7 @@ tmux neww -n "window 2"
 # 创建window 2
 
 tmux kill-session -t 0
-# 终结session
+# 终结session（alias是tk 0)
 
 tmux rename-session -t 0 "new name"
 # 重命名session，也可以进去用快捷键
@@ -1423,9 +1420,18 @@ done
 
 >传统调试器只能向前执行，而Bug定位需要向后思考
 >反向调试器让开发者可以像侦探一样，从错误结果"倒推"到原因，节约时间
-### 系统调用strace
+### 系统调用
+> 系统调用是指“用户程序调用内核”，然后内核再执行功能（如访问硬件）
+
 ```bash
-sudo strace ls -l > /dev/null # 跟踪 ls -l 命令的系统调用过程
+strace ls -l   # 跟踪 ls -l 命令的系统调用过程
+strace ls -l > stdout.txt 2> stderr.txt
+# stdout.txt: ls 的文件列表
+# stderr.txt: 系统调用跟踪信息
+
+sudo strace -p <PID> # 追踪某进程的系统调用
+
+strace -e trace=open,read,write ls # 只显示 ls 命令中涉及 open、read 和 write 的系统调用
 ```
 ### 静态分析
 >英语静态分析工具writegood和proselint(前者需要安装 Node.js 和 npm)
@@ -1639,7 +1645,7 @@ eog pycallgraph.png
 ![[pycallgraph.png]]
 
 ### 资源监控
-htop  (类似的还有glances,dstat)
+`htop`  (类似的还有glances,dstat)，写脚本用`top`(命令行工具,输出的是文本)
 
 | htop<br>快捷键   | 功能描述                  | 说明与用途                                      |
 | ------------- | --------------------- | ------------------------------------------ |
@@ -1951,3 +1957,45 @@ uid           [ unknown] Anish Athalye <me@anishathalye.com>
 
 # 10.大杂烩
 ## AutoHotkey
+## 守护进程deamon
+```bash
+systemctl status # 查看正在运行的所有守护进程
+systemctl status NetworkManager #　进一步查看具体守护进程
+
+crontab -e 
+# 打开vim界面后在最下方写,每周一10点定时更新vim插件
+0 10 * * 1 ~/scripts/Vim_plug_upgrade.sh
+0 * * * * top -b -n1 >> ~/logs/cpu.log
+```
+> cron是定时任务调度器
+
+> 用户自定义服务配置文件存在`/etc/systemd/system/`目录下。所有位于这个目录的服务文件都可以被 systemctl 命令管理（enable（启用）、disable（禁用）、start（启动）、stop（停止）、restart（重启）、或者 status（检查）等），而且你可以自己新建service文件（配置systemd)
+```bash
+sudo systemctl daemon-reload # 新建或修改 .service 文件后的步骤
+sudo systemctl enable tmux.service # 自启动
+```
+
+## Fuse
+> 传统流程：touch hello.txt -> 用户态 -> 内核态 -> VFS -> EXT4
+> FUSE流程：touch hello.txt -> 用户态 -> 内核态 -> VFS -> FUSE内核模块（fuse.ko) -> FUSE 守护进程(用户态)
+
+> `touch hello.txt`实际上,touch（用户层面程序）并不直接操作硬盘,它只是调用了一个`系统调用`（比如 open() 或 creat()）,“系统调用”是程序与内核交流的唯一方式
+
+> **FUSE**（Filesystem in Userspace/用户空间文件系统）允许运行在用户空间上的程序实现文件系统调用，并将这些调用与内核接口联系起来。
+
+例子：
+**rclone**:提供了一种像本地一样访问远程云端空间（如dropbox、google drive)的方式，因此在实际使用中可以起到“扩容”的效果
+**sshfs**:使用 SSH 连接在本地打开远程主机上的文件
+**gocryptfs**:文件以加密形式保存在磁盘里，但挂载gocryptfs后用户可以直接从挂载点访问文件的明文
+还有kbfs、borgbackup等
+
+## 备份
+## API
+```bash
+curl https://api.weather.gov/points/42.3604,-71.094 > weather_data.json
+curl $(jq -r '.properties.forecastHourly' weather_data.json)
+```
+
+> `json`文件
+
+> `jq`
